@@ -1,3 +1,4 @@
+# encoding: utf-8
 import codecs
 import json
 from collections import defaultdict
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-path = './data/usagov_bitly_data2012-03-16-1331923249.txt'
+path = '../data/usagov_bitly_data2012-03-16-1331923249.txt'
 
 def read_usa_recods():
    records =[json.loads(line) for line in codecs.open(path,encoding='utf-8')]
