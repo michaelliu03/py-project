@@ -1,7 +1,7 @@
 import  numpy as np
 import  codecs
 
-from classify.feature_extraction import bow_extractor
+from classify.feature_extraction import bow_extractor, tfidf_extractor, word2vector_extractor
 from classify.util import *
 from sklearn.cross_validation import  train_test_split
 from classify.normalization import normalize_corpus
@@ -20,9 +20,9 @@ def get_data():
     return corpus_data, corpus_label
 
 def prepare_datasets(corpus, labels, test_data_proportion =0.3):
-    train_X, test_X ,train_Y,train_Y = train_test_split(corpus,labels,
-                                                        test_size= test_data_proportion,
-                                                        random_state=0.3)
+    train_X, test_X, train_Y, test_Y = train_test_split(corpus, labels,
+                                                        test_size=test_data_proportion, random_state=42)
+    return train_X, test_X, train_Y, test_Y
 
 def get_metrics(true_labels, predicted_labels):
     print('准确率:', np.round(
@@ -57,12 +57,25 @@ def train_predict_evaluate_model(classifier,
                 predicted_labels=predictions)
     return predictions
 
+def classifer_type(personal):
+    if personal == 1:
+       mnb = MultinomialNB()
+       classifertype  = mnb
+    if personal == 2:
+       svm = SGDClassifier(loss='hinge', n_iter=100)
+       classifertype = svm
+    if personal == 3:
+       lr = LogisticRegression()
+       classifertype = lr
+    return classifertype
+
+
 # 通过 bag of words 进行
-def bow_extractor_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels):
+def bow_extractor_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels,type):
+    classifertype = classifer_type(type)
     bow_vectorizer, bow_train_features = bow_extractor(norm_train_corpus)
     bow_test_features = bow_vectorizer.transform(norm_test_corpus)
-    mnb = MultinomialNB()
-    mnb_bow_predictions = train_predict_evaluate_model(classifier=mnb,
+    bow_predictions = train_predict_evaluate_model(classifier=classifertype,
                                                        train_features=bow_train_features,
                                                        train_labels=train_labels,
                                                        test_features=bow_test_features,
@@ -70,10 +83,20 @@ def bow_extractor_model(norm_train_corpus,norm_test_corpus,train_labels,test_lab
 
 
 # 通过 tf-idf 进行
-
+def tf_idf_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels,type):
+    classifertype = classifer_type(type)
+    tfidf_vectorizer, tfidf_train_features = tfidf_extractor(norm_train_corpus)
+    tfidf_test_features = tfidf_vectorizer.transform(norm_test_corpus)
+    tfidf_predictions = train_predict_evaluate_model(classifier=classifertype,
+                                                         train_features=tfidf_train_features,
+                                                         train_labels=train_labels,
+                                                         test_features=tfidf_test_features,
+                                                         test_labels=test_labels)
 
 # 通过 word2vector 进行
-
+def word2vector_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels,type):
+    #print("to be continue!!!")
+    word2vector_extractor(norm_train_corpus)
 
 def process():
     corpus, labels = get_data()  # 获取数据集
@@ -89,8 +112,9 @@ def process():
     # 进行归一化
     norm_train_corpus = normalize_corpus(train_corpus)
     norm_test_corpus = normalize_corpus(test_corpus)
-
-    bow_extractor_model(norm_train_corpus,norm_test_corpus)
+    #bow_extractor_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels, 1)
+    #tf_idf_model(norm_train_corpus, norm_test_corpus, train_labels, test_labels, 1)
+    word2vector_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels, 1)
 
 
 
