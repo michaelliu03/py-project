@@ -112,12 +112,15 @@ def process():
     # 进行归一化
     norm_train_corpus = normalize_corpus(train_corpus)
     norm_test_corpus = normalize_corpus(test_corpus)
-    #bow_extractor_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels, 1)
-    #tf_idf_model(norm_train_corpus, norm_test_corpus, train_labels, test_labels, 1)
-    word2vector_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels, 1)
-
-
-
+    print("基于词袋模型分类器")
+    bow_extractor_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels, 1)
+    bow_extractor_model(norm_train_corpus, norm_test_corpus, train_labels, test_labels, 2)
+    bow_extractor_model(norm_train_corpus, norm_test_corpus, train_labels, test_labels, 3)
+    #word2vector_model(norm_train_corpus,norm_test_corpus,train_labels,test_labels, 1)
+    print("基于tf-idf分类器")
+    tf_idf_model(norm_train_corpus, norm_test_corpus, train_labels, test_labels, 1)
+    tf_idf_model(norm_train_corpus, norm_test_corpus, train_labels, test_labels, 2)
+    tf_idf_model(norm_train_corpus, norm_test_corpus, train_labels, test_labels, 3)
 
 if  __name__ == "__main__":
     process()

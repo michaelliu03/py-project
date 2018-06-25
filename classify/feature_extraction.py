@@ -28,10 +28,11 @@ def tfidf_extractor(corpus, ngram_range=(1, 1)):
 
 def word2vector_extractor(corpus):
     tokenized_train = [jieba.lcut(text) for text in corpus]
-    print(tokenized_train[2:10])
+    #print(tokenized_train[2:10])
     model = gensim.models.Word2Vec(tokenized_train,
                                    size=500,
                                    window=100,
                                    min_count=30,
                                    sample=1e-3)
+
 
