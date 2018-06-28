@@ -4,3 +4,5 @@ Read the some Books , Papers and so on.
 
   (1) First reading book is pydata book.
   (2) Code is reading notes
+  (3) classify model
+  (4) cluster model
