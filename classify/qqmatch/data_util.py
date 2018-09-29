@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 import codecs
 import xlrd
 import xlwt
@@ -9,7 +10,105 @@ import json
 import re
 import pickle
 
-data_path = ''
-all_ = pd.read_excel('./questionForTrain.xlsx', header=None)
+import  numpy as np
 
-st = pd.read_excel('./data/stopwords.xlsx', header=None)
+global stopwords
+stopwords = []
+
+data_path = '../data/questionForTrain.xlsx'
+stop_words_path = '../dict/stop_words.utf8'
+
+
+# del num
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+    return False
+
+def replace_num(string):
+    if(is_number(string)):
+        string = '*'
+    return string
+
+
+
+
+# 输出字典
+def output_vocabulary(abc):
+    values = abc[:]
+    keys = abc.index
+    vocabulary = dict(zip(keys, values))
+    with open('../model/words_index.json','w') as outfile:
+        json.dump(vocabulary, outfile, indent=4)
+
+def output_labels(labels):
+    with open('../model/labels_index.json', 'w') as outfile:
+             json.dump(labels, outfile, indent=4)
+
+
+
+def train_test_split(x,y,test_size):
+    test_len = int(x.shape[0]*test_size)
+    x_test = x[:test_len]
+    x_train = x[test_len:]
+    y_test = y[:test_len]
+    y_train = y[test_len:]
+    return x_train, x_test, y_train, y_test
+
+def load_data(maxlen, min_count, test_train_ratio):
+    all_ = pd.read_excel(data_path, header=None) # id , text , compute value , 标注
+    st = codecs.open(stop_words_path,'r',encoding='utf-8')
+    all_[1] = all_[1].apply(lambda s: replace_num(s))
+    all_['words'] = all_[1].apply(lambda s: list(jieba.cut(s)))
+    print(all_.head(5))
+    print(all_['words'].head(5))
+
+    # 原版用的是OneHot，这里用word2vector,首先组织content
+    content = []
+    for i in all_['words']:
+        content.extend(i)
+
+    # 组织字典
+    abc = pd.Series(content).value_counts()
+    abc = abc[abc >= min_count]
+    abc[:] = range(1, len(abc) + 1)
+    vocabulary_size = len(abc)
+    print('vocabulary_size')
+    print(vocabulary_size)
+    abc[''] = 0
+
+    output_vocabulary(abc) # 保存字典
+
+    #查字典并word2vector
+    def doc2num(s, maxlen):
+        s = [i for i in s if i in abc.index]
+        s = s[:maxlen - 1] + [''] * max(1, maxlen - len(s))
+        return list(abc[s])
+
+
+    all_['doc2num'] = all_['words'].apply(lambda s: doc2num(s, maxlen))
+    idx = range(len(all_))
+    np.random.shuffle(idx)
+    all_ = all_.loc[idx]
+    print(all_.head(5))
+
+    x_train = np.array(list(all_['doc2num']))
+    labels = sorted(list(set(all_[4])))
+    print(labels)
+    output_labels(labels)
+    num_labels = len(labels)
+    one_hot = np.zeros((num_labels, num_labels), int)
+    np.fill_diagonal(one_hot, 1)
+    label_dict = dict(zip(labels, one_hot))
+    y_train = np.array(all_[4].apply(lambda y: label_dict[y]).tolist())
+#   split dataset for training and validation use
+    x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_train_ratio)
+
+    return (x_train, y_train), (x_test, y_test),vocabulary_size, maxlen
+
+
+
+load_data(30,1,0.2)
