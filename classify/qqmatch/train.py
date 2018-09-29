@@ -7,12 +7,13 @@ from tensorflow.python.ops.rnn import bidirectional_dynamic_rnn as bi_rnn
 from tensorflow.python.ops import array_ops
 import json
 import sys
+import numpy as np
 
 from data_util import *
 from attention import *
 
 # Read parameters
-from classify.qqmatch import data_util
+
 
 training_config = sys.argv[1]
 params = json.loads(open(training_config).read())
@@ -46,3 +47,107 @@ rnn_outputs, _ = rnn(lstm_cell, inputs=batch_embedded, sequence_length=seq_len_p
 
 # Attention layer
 attention_output, alpha = attention(rnn_outputs, attention_size)
+
+# L2 rule
+l2_loss = tf.constant(0.0)
+
+drop = tf.nn.dropout(attention_output, keep_prob_ph)
+
+
+# Fully connected layer
+W = tf.Variable(tf.truncated_normal([drop.get_shape()[1].value,y_train.shape[1]], stddev=0.1))
+
+#W = tf.Variable(tf.truncated_normal([hidden_size,y_train.shape[1]], stddev=0.1))
+b = tf.Variable(tf.constant(0.1, shape=[y_train.shape[1]]))
+y_hat = tf.nn.xw_plus_b(drop, W, b)
+
+l2_loss += tf.nn.l2_loss(W)
+l2_loss += tf.nn.l2_loss(b)
+
+# define loss and optimizer
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=y_hat, labels=target_ph)) + l2_reg_lambda * l2_loss
+optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(loss)
+
+
+# Accuracy metric
+correct_predictions = tf.equal(tf.argmax(y_hat, 1), tf.argmax(target_ph, 1))
+accuracy = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
+
+tf.summary.scalar('accuracy', accuracy)
+tf.summary.scalar('loss', loss)
+# Batch generators
+train_batch_generator = batch_generator(X_train, y_train, batch_size)
+test_batch_generator = batch_generator(X_test, y_test, batch_size)
+
+delta = 0.5
+saver = tf.train.Saver()
+
+
+print ("x_train dimentions are")
+print (X_train.shape[0])
+print (X_train.shape[1])
+
+print ("x_test dimentions are")
+print (X_test.shape[0])
+print (X_test.shape[1])
+
+print ("y_hat are")
+print (y_hat.shape[0])
+print (y_hat.shape[1])
+
+with tf.Session()  as  sess :
+    sess.run(tf.global_variables_initializer())
+    merged = tf.summary.merge_all()
+
+    print("start learning.....")
+    for epoch in range(num_epochs):
+        loss_train = 0
+        loss_test = 0
+        accuracy_train = 0
+        accuracy_test = 0
+
+        print("epoch: {}\t".format(epoch), end="")
+        # Training
+        num_batches = X_train.shape[0] / batch_size
+
+        print("epoch: {}\t".format(epoch), end="")
+        # Training
+        num_batches = X_train.shape[0] / batch_size
+        for b in range(num_batches):
+            x_batch, y_batch = train_batch_generator.next()
+            seq_len = np.array([list(x).index(0) + 1 for x in x_batch])  # actual lengths of sequences
+            #   print(seq_len.shape)
+            summary_tr, alpha_values, loss_tr, acc, _ = sess.run([merged, alpha, loss, accuracy, optimizer],
+                                                                 feed_dict={batch_ph: x_batch, target_ph: y_batch,
+                                                                            seq_len_ph: seq_len,
+                                                                            keep_prob_ph: keep_prob})
+            accuracy_train += acc
+            # summary_train += summary_tr
+            loss_train = loss_tr * delta + loss_train * (1 - delta)
+        #    writer.add_summary(summary_tr,epoch*num_batches + b)
+        #    print(alpha_values)
+        accuracy_train /= num_batches
+        # summary_train /= num_batches
+
+        # Validating
+        num_batches = X_test.shape[0] / batch_size
+        for b in range(num_batches):
+            x_batch, y_batch = test_batch_generator.next()
+            seq_len = np.array([list(x).index(0) + 1 for x in x_batch])  # actual lengths of sequences
+            loss_test_batch, acc = sess.run([loss, accuracy, ], feed_dict={batch_ph: x_batch, target_ph: y_batch,
+                                                                           seq_len_ph: seq_len, keep_prob_ph: 1.0})
+            accuracy_test += acc
+            loss_test += loss_test_batch
+        accuracy_test /= num_batches
+        loss_test /= num_batches
+
+        #  writer.add_summary(summary_tr,epoch)
+        #  writer.add_summary(accuracy_test,epoch)
+
+        print("loss: {:.3f}, val_loss: {:.3f}, acc: {:.3f}, val_acc: {:.3f}".format(
+            loss_train, loss_test, accuracy_train, accuracy_test
+        ))
+
+        save_path = saver.save(sess, "./model/product_one_million_second_cate.ckpt")
+
+
