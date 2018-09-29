@@ -9,8 +9,8 @@ import json
 import sys
 import numpy as np
 
-from data_util import *
-from attention import *
+from classify.qqmatch.data_util import  *
+from classify.qqmatch.attention import *
 
 # Read parameters
 
@@ -75,9 +75,10 @@ accuracy = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
 
 tf.summary.scalar('accuracy', accuracy)
 tf.summary.scalar('loss', loss)
+
 # Batch generators
 train_batch_generator = batch_generator(X_train, y_train, batch_size)
-test_batch_generator = batch_generator(X_test, y_test, batch_size)
+test_batch_generator =  batch_generator(X_test, y_test, batch_size)
 
 delta = 0.5
 saver = tf.train.Saver()

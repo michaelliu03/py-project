@@ -96,14 +96,14 @@ def load_data(maxlen, min_count, test_train_ratio):
     print(all_.head(5))
 
     x_train = np.array(list(all_['doc2num']))
-    labels = sorted(list(set(all_[4])))
+    labels = sorted(list(set(all_[2])))
     print(labels)
     output_labels(labels)
     num_labels = len(labels)
     one_hot = np.zeros((num_labels, num_labels), int)
     np.fill_diagonal(one_hot, 1)
     label_dict = dict(zip(labels, one_hot))
-    y_train = np.array(all_[4].apply(lambda y: label_dict[y]).tolist())
+    y_train = np.array(all_[2].apply(lambda y: label_dict[y]).tolist())
 #   split dataset for training and validation use
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_train_ratio)
     return (x_train, y_train), (x_test, y_test),vocabulary_size, maxlen
@@ -129,3 +129,32 @@ def batch_generator(X, y, batch_size):
             X_copy = X_copy[indices]
             y_copy = y_copy[indices]
             continue
+
+
+def load_data_prediction(maxlen, min_count):
+    all_ = pd.read_excel('../data/ProductHalfMThirdCat.xlsx', header=None)
+    #  all_ = pd.read_excel('./data/ProductNewBrandSecondClass.xlsx', header=None)
+    all_[1] = all_[1].apply(lambda s: replace_num(s))
+    all_['words'] = all_[1].apply(lambda s: list(jieba.cut(s)))
+    words_index = json.loads(open('../model/words_index.json').read())
+    labels = json.loads(open('../model/labels_index.json').read())
+    abc = pd.Series(words_index)
+    print(all_['words'])
+
+    def doc2numpre(s, maxlen):
+        s = [i for i in s if i in abc.index]
+        s = s[:maxlen - 1] + [''] * max(1, maxlen - len(s))
+        return list(abc[s])
+
+    print('one hot conversion')
+    all_['doc2num'] = all_['words'].apply(lambda s: doc2numpre(s, maxlen))
+
+    vocabulary_size = len(words_index) - 1
+    x_train = np.array(list(all_['doc2num']))
+    num_labels = len(labels)
+    one_hot = np.zeros((num_labels, num_labels), int)
+    np.fill_diagonal(one_hot, 1)
+    label_dict = dict(zip(labels, one_hot))
+
+    y_train = np.array(all_[2].apply(lambda y: label_dict[y]).tolist())
+    return x_train, y_train, vocabulary_size, maxlen, all_[2], num_labels
