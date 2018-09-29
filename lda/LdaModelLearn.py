@@ -14,3 +14,7 @@ for line in fp:
 dictionary = corpora.Dictionary(train)
 corpus = [ dictionary.doc2bow(text) for text in train ]
 lda = LdaModel(corpus=corpus, id2word=dictionary, num_topics=100)
+
+# 查看主题
+for topic in lda.print_topics(num_words=10):
+    print(topic[1])
