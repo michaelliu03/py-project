@@ -106,9 +106,7 @@ def load_data(maxlen, min_count, test_train_ratio):
     y_train = np.array(all_[4].apply(lambda y: label_dict[y]).tolist())
 #   split dataset for training and validation use
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_train_ratio)
-
     return (x_train, y_train), (x_test, y_test),vocabulary_size, maxlen
 
 
 
-load_data(30,1,0.2)
