@@ -9,10 +9,10 @@ from random import random
 from datetime import datetime
 
 from nltk.translate.bleu_score import sentence_bleu
-from tensorflow.python.platform import gfile
 
-from seq2seq import data_utils
-from seq2seq import seq2seq_model
+
+from seq2seq import data_utils, seq2seq_model
+#from seq2seq import seq2seq_model
 
 
 import heapq

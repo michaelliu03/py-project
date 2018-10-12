@@ -20,8 +20,9 @@ from __future__ import division
 from __future__ import print_function
 
 import sys, os, re, gzip, tarfile
-reload(sys) 
-sys.setdefaultencoding('utf8')
+import jieba
+#reload(sys)
+#sys.setdefaultencoding('utf8')
 
 from six.moves import urllib
 

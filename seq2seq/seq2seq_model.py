@@ -368,14 +368,14 @@ class Seq2SeqModel(object):
 
       # Episode total reward
       R = 0.25*r1 + 0.25*r2 + 0.5*r3
-      rewards.append(R)
+      ep_rewards.append(R)
       #----------------------------------------------------
       if (resp_txt in self.dummy_dialogs) or (len(resp_tokens) <= 3) or (encoder_inputs in ep_encoder_inputs): 
         break # check if dialog ended
       
     # gradient decent according to batch rewards
     rto = (max(ep_step_loss) - min(ep_step_loss)) / (max(ep_rewards) - min(ep_rewards))
-    advantage = [mp.mean(ep_rewards)*rto] * len(args.buckets)
+    advantage = [np.mean(ep_rewards)*rto] * len(args.buckets)
     _, step_loss, _ = self.step(session, init_inputs[0], init_inputs[1], init_inputs[2], init_inputs[3],
               training=True, force_dec_input=False, advantage=advantage)
     

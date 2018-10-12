@@ -119,6 +119,5 @@ def train(args):
 
             sys.stdout.flush()
 
-if __name__ == 'main()':
-    setup_workpath(workspace=args.workspace)
+
 
