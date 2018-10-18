@@ -107,7 +107,7 @@ def process():
     # 对数据进行划分
     train_corpus, test_corpus, train_labels, test_labels = prepare_datasets(corpus,
                                                                             labels,
-                                                                            test_data_proportion=0.3)
+                                                                          test_data_proportion=0.3)
 
     # 进行归一化
     norm_train_corpus = normalize_corpus(train_corpus)
